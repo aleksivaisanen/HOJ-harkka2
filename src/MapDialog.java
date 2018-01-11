@@ -141,6 +141,13 @@
         // TODO:
         // getMap-KYSELYN URL-OSOITTEEN MUODOSTAMINEN JA KUVAN PÄIVITYS ERILLISESSÄ SÄIKEESSÄ
         // imageLabel.setIcon(new ImageIcon(url));
+        
+        
+        MapUpdater map = new MapUpdater();
+        Thread t = new Thread(map);
+        t.start();
+        t.join();
+        map.getUrl();
       }
      
     } // MapDialog
