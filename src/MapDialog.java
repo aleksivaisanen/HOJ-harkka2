@@ -16,6 +16,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -68,6 +69,8 @@ import org.w3c.dom.NodeList;
         leftPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         leftPanel.setMaximumSize(new Dimension(100, 600));
      
+        //haetaan getcapabilities-kyselyn avulla halutut tiedot XML:stä
+        
         URL url = new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities");
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -76,7 +79,8 @@ import org.w3c.dom.NodeList;
         
         NodeList layerlist = doc.getElementsByTagName("Layer");
         
-        for(int i = 1; i<layerlist.getLength(); i++) {
+        //lisätään kaikki layers-vaihtoehdot käyttöliittymään
+        for(int i = 0; i<layerlist.getLength(); i++) {
         	Node child1 = layerlist.item(i).getFirstChild().getNextSibling();
         	Node sibling = child1.getNextSibling();
         	String name = child1.getTextContent();
@@ -84,9 +88,6 @@ import org.w3c.dom.NodeList;
         	leftPanel.add(new LayerCheckBox(name, title, true));
         }
         
-        Element root = doc.getDocumentElement();
-        
-        Node ch = root.getFirstChild();
         
            
         // TODO:
@@ -111,7 +112,15 @@ import org.w3c.dom.NodeList;
       }
      
       public static void main(String[] args) throws Exception {
-        new MapDialog();
+    	  SwingUtilities.invokeLater(new Runnable(){
+      		public void run() {
+      			try {
+      			  new MapDialog();
+      			}catch(Exception e) {
+      				e.printStackTrace();
+      			}
+      		}
+  	    });
       }
      
       // Kontrollinappien kuuntelija
@@ -185,6 +194,7 @@ import org.w3c.dom.NodeList;
         }
         if (s.endsWith(",")) s = s.substring(0, s.length() - 1);
      
+        //muodostetaan url splittaamalla alkuperäinen url '&' merkkien kohdalta ja lisäämällä halutut parametrit tilalle
         String[] split = url.split("&");
         split[7]="LAYERS="+s;
         System.out.println(split[7]);
@@ -194,14 +204,10 @@ import org.w3c.dom.NodeList;
         	newURL += a +"&";
         }
         newURL = newURL.substring(0, newURL.length()-1);
-        
-        MapUpdater map = new MapUpdater(newURL, imageLabel);
-        Thread t = new Thread(map);
-        t.start();
-        t.join();
+        MapUpdater mapupdater = new MapUpdater(newURL, imageLabel);
+        mapupdater.execute();
         
        
-        imageLabel.setIcon(new ImageIcon(new URL(newURL)));
         
         // TODO:
         // getMap-KYSELYN URL-OSOITTEEN MUODOSTAMINEN JA KUVAN PÄIVITYS ERILLISESSÄ SÄIKEESSÄ

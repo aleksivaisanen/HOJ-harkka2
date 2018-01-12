@@ -2,8 +2,16 @@ import java.net.URL;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.SwingWorker;
 
-public class MapUpdater implements Runnable {
+/**
+ * 
+ * MapUpdater-luokka, jossa kartan päivitys tapahtuu
+ * Kartan päivitys tapahtuu SwingWorkerin avulla, jottai käyttöliittymä ei tukkiudu uutta kuvaa odotellessa
+ *
+ */
+
+public class MapUpdater extends SwingWorker<Integer, Void> {
 	private String url;
 	private JLabel label;
 	
@@ -12,16 +20,13 @@ public class MapUpdater implements Runnable {
 		this.label = label;
 	}
 	
-	public void run(){
+	protected Integer doInBackground(){
 		try {
-		label.setIcon(new ImageIcon(new URL(url)));
+			label.setIcon(new ImageIcon(new URL(url)));
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
+		return 1;
 	}
-
-	//public JLabel getMapImg() {
-		//return imageLabel.setIcon(new ImageIcon(url));	
-	//}
 }
