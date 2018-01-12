@@ -1,13 +1,33 @@
     // Kartankatseluohjelman graafinen käyttöliittymä
      
-    import javax.swing.*;
-    import javax.swing.event.*;
-    import java.awt.*;
-    import java.awt.event.*;
-    import java.net.*;
+    import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.net.URL;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
      
     public class MapDialog extends JFrame {
      
+      String url = "http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&BBOX=-180,-90,180,90&SRS=EPSG:4326&WIDTH=953&HEIGHT=480&LAYERS=bluemarble,cities&STYLES=&FORMAT=image/png&TRANSPARENT=true";  
+    	
       // Käyttöliittymän komponentit
      
       private JLabel imageLabel = new JLabel();
@@ -23,6 +43,7 @@
      
       public MapDialog() throws Exception {
      
+    	  
         // Valmistele ikkuna ja lisää siihen komponentit
      
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -30,7 +51,7 @@
      
         // ALLA OLEVAN TESTIRIVIN VOI KORVATA JOLLAKIN MUULLA ERI ALOITUSNÄKYMÄN
         // LATAAVALLA RIVILLÄ
-        imageLabel.setIcon(new ImageIcon(new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&BBOX=-180,-90,180,90&SRS=EPSG:4326&WIDTH=953&HEIGHT=480&LAYERS=bluemarble,cities&STYLES=&FORMAT=image/png&TRANSPARENT=true")));
+        imageLabel.setIcon(new ImageIcon(new URL(url)));
      
         add(imageLabel, BorderLayout.EAST);
      
@@ -47,11 +68,31 @@
         leftPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
         leftPanel.setMaximumSize(new Dimension(100, 600));
      
+        URL url = new URL("http://demo.mapserver.org/cgi-bin/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities");
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(url.openStream());
+        doc.getDocumentElement().normalize();
+        
+        NodeList layerlist = doc.getElementsByTagName("Layer");
+        
+        for(int i = 1; i<layerlist.getLength(); i++) {
+        	Node child1 = layerlist.item(i).getFirstChild().getNextSibling();
+        	Node sibling = child1.getNextSibling();
+        	String name = child1.getTextContent();
+        	String title = sibling.getNextSibling().getTextContent();
+        	leftPanel.add(new LayerCheckBox(name, title, true));
+        }
+        
+        Element root = doc.getDocumentElement();
+        
+        Node ch = root.getFirstChild();
+        
+           
         // TODO:
         // ALLA OLEVIEN KOLMEN TESTIRIVIN TILALLE SILMUKKA JOKA LISÄÄ KÄYTTÖLIITTYMÄÄN
         // KAIKKIEN XML-DATASTA HAETTUJEN KERROSTEN VALINTALAATIKOT MALLIN MUKAAN
-        leftPanel.add(new LayerCheckBox("bluemarble", "Maapallo", true));
-        leftPanel.add(new LayerCheckBox("cities", "Kaupungit", false));
+        
      
         leftPanel.add(refreshB);
         leftPanel.add(Box.createVerticalStrut(20));
@@ -78,7 +119,12 @@
       private class ButtonListener implements ActionListener{
         public void actionPerformed(ActionEvent e) {
           if(e.getSource() == refreshB) {
-            //try { updateImage(); } catch(Exception ex) { ex.printStackTrace(); }
+            try { 
+            	updateImage(); 
+            	} 
+            catch(Exception ex) { 
+            	ex.printStackTrace(); 
+            	}
           }
           if(e.getSource() == leftB) {
             // TODO:
@@ -116,6 +162,7 @@
       // Valintalaatikko, joka muistaa karttakerroksen nimen
       private class LayerCheckBox extends JCheckBox {
         private String name = "";
+        
         public LayerCheckBox(String name, String title, boolean selected) {
           super(title, null, selected);
           this.name = name;
@@ -138,16 +185,31 @@
         }
         if (s.endsWith(",")) s = s.substring(0, s.length() - 1);
      
+        String[] split = url.split("&");
+        split[7]="LAYERS="+s;
+        System.out.println(split[7]);
+        
+        String newURL ="";
+        for(String a : split) {
+        	newURL += a +"&";
+        }
+        newURL = newURL.substring(0, newURL.length()-1);
+        
+        MapUpdater map = new MapUpdater(newURL, imageLabel);
+        Thread t = new Thread(map);
+        t.start();
+        t.join();
+        
+       
+        imageLabel.setIcon(new ImageIcon(new URL(newURL)));
+        
         // TODO:
         // getMap-KYSELYN URL-OSOITTEEN MUODOSTAMINEN JA KUVAN PÄIVITYS ERILLISESSÄ SÄIKEESSÄ
         // imageLabel.setIcon(new ImageIcon(url));
         
         
-        MapUpdater map = new MapUpdater();
-        Thread t = new Thread(map);
-        t.start();
-        t.join();
-        map.getUrl();
+        
       }
+      
      
     } // MapDialog
