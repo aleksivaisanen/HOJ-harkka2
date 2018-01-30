@@ -17,12 +17,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -63,7 +61,6 @@ public class MapDialog extends JFrame {
 		downB.addActionListener(bl);
 		zoomInB.addActionListener(bl);
 		zoomOutB.addActionListener(bl);
-
 		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		leftPanel.setMaximumSize(new Dimension(100, 600));
@@ -202,6 +199,7 @@ public class MapDialog extends JFrame {
 
 	public String moveOnTheMap(int x1, int y1, int x2, int y2, int zoom) {
 		String newURL = "";
+		//tarkistetaan, että pysytään haluttujen rajojen sisällä kartalla liikkuessa
 		if (zoom == 0 && getCoordinates(0) + x1 >= -180 && getCoordinates(1) + y1 >= -90
 				&& getCoordinates(2) + x2 <= 180 && getCoordinates(3) + y2 < 90) {
 			String[] split = getURL().split("&");
